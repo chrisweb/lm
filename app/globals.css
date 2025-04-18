@@ -64,7 +64,7 @@
   --border: oklch(0.8 0.05 60); /* Light pink border */
   --input: oklch(0.9 0.03 80); /* Lighter pastel blue */
   --ring: oklch(0.7 0.15 30); /* Coral ring */
-  
+
   /* Sidebar - pastel themed */
   --sidebar: oklch(0.95 0.04 50); /* Lighter pastel pink */
   --sidebar-foreground: oklch(0.3 0.05 290); /* Dark purple */
@@ -96,7 +96,7 @@
   --border: oklch(0.7 0.28 320 / 30%); /* Neon pink border with transparency */
   --input: oklch(0.7 0.28 320 / 15%); /* Neon pink with more transparency */
   --ring: oklch(0.7 0.28 320 / 60%); /* Neon pink ring */
-  
+
   /* Sidebar - synthwave themed */
   --sidebar: oklch(0.2 0.04 280); /* Slightly lighter dark purple */
   --sidebar-foreground: oklch(0.9 0.04 290); /* Light purple text */

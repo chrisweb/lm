@@ -8,7 +8,7 @@ import { MemeTopic } from '@/types/meme'
 interface MemeTopicSelectorProps {
     topics: MemeTopic[]
     selectedTopic: string
-    onSelectTopic: (topicId: string) => void
+    onSelectTopic: (letzai_model_name: string) => void
 }
 
 export function MemeTopicSelector({ topics, selectedTopic, onSelectTopic }: MemeTopicSelectorProps) {
@@ -36,7 +36,7 @@ export function MemeTopicSelector({ topics, selectedTopic, onSelectTopic }: Meme
                             />
                         </div>
                         <div className="p-2 text-center">
-                            <p className="text-sm font-medium">{topic.title}</p>
+                            <p className="text-sm font-medium">{topic.letzai_model_name}</p>
                         </div>
                     </Card>
                 ))}

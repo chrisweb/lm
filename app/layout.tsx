@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/components/theme/provider'
-import { Toaster } from '@/components/ui/toaster'
+import { Toaster } from '@/components/base/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-    title: 'AI Meme Generator',
-    description: 'Generate hilarious memes with AI',
+    title: 'Prototype - AI Meme Generator',
+    description: 'AI Image Generator powered by Letz.ai',
 }
 
 export default function RootLayout({

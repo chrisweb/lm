@@ -2,7 +2,7 @@
 
 import { SidebarProvider, Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { MemeGenerator } from '@/components/meme/MemeGenerator'
-import { useMobile } from '@/hooks/use-mobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface SettingsSidebarProps {
     onImageGenerated: (image: string) => void
@@ -10,7 +10,8 @@ interface SettingsSidebarProps {
 }
 
 export function SettingsSidebar({ onImageGenerated, onLoadingChange }: SettingsSidebarProps) {
-    const isMobile = useMobile()
+
+    const isMobile = useIsMobile()
 
     return (
         <SidebarProvider defaultOpen={!isMobile}>

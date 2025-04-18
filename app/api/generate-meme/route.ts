@@ -1,89 +1,67 @@
 import { letzAi } from '@/lib/providers/letz-ai'
-import { Message, createDataStreamResponse, streamText } from 'ai'
+import { Message, experimental_generateImage, createDataStreamResponse } from 'ai'
+import { memeTopics, memeStyles } from '@/lib/meme-data'
 
 export async function POST(request: Request) {
+
     try {
-        // Parse the request body
-        const { messages, prompt, width, height, steps, guidanceScale, quality, creativity, hasWatermark, modelId } = await request.json() as {
+
+        const { messages, topic, style } = await request.json() as {
             messages?: Message[]
-            prompt: string
-            width?: number
-            height?: number
-            steps?: number
-            guidanceScale?: number
-            quality?: number
-            creativity?: number
-            hasWatermark?: boolean
-            modelId?: string
+            topic?: string
+            style?: string
         }
 
-        console.log('Received request:', { messages, prompt, width, height, steps, guidanceScale, quality, creativity, hasWatermark, modelId })
+        console.log('Received request:', { messages, topic, style })
 
         // Use createDataStreamResponse to properly handle streaming with annotations
         return createDataStreamResponse({
             execute: async (dataStream) => {
                 try {
-                    // Create the LetzAi model with specified or default model ID
-                    const model = letzAi.image(modelId)
 
-                    // Generate options with any specified parameters
-                    const generateOptions = {
-                        prompt,
-                        width: width ?? 1024,
-                        height: height ?? 1024,
-                        providerOptions: {
-                            letzAi: {
-                                quality: quality ?? 2,
-                                creativity: creativity ?? 2,
-                                hasWatermark: hasWatermark ?? true,
-                                systemVersion: 3,
-                                mode: 'default',
-                            }
+                    const model = letzAi(
+                        'letz-ai-image',
+                        {
+                            maxImagesPerCall: 1,
                         }
+                    )
+
+                    console.log('Model initialized:', model)
+
+                    if (!messages || messages.length === 0) {
+                        throw new Error('No messages provided')
                     }
 
-                    // Add optional parameters if they're provided
-                    if (quality !== undefined) {
-                        generateOptions.providerOptions.letzAi.quality = quality
+                    if (!topic || !style) {
+                        throw new Error('Topic or style not provided')
                     }
 
-                    if (creativity !== undefined) {
-                        generateOptions.providerOptions.letzAi.creativity = creativity
-                    }
+                    const lastMessageOnly = messages[0].content
 
-                    if (hasWatermark !== undefined) {
-                        generateOptions.providerOptions.letzAi.hasWatermark = hasWatermark
-                    }
+                    const memeTopic = memeTopics.find(t => t.id === topic)?.letzai_model_name ?? ''
+                    const memeStyle = memeStyles.find(s => s.id === style)?.title ?? ''
 
-                    // Call the Letz.ai provider to generate the image
-                    const result = await model.doGenerate(generateOptions)
+                    const prompt = `You are a skilled content creator that loves generating memes. The topic for this meme is "${memeTopic}". The style you should use is "${memeStyle}". Follow the instructions: "${lastMessageOnly}". `
+
+                    console.log('Generated prompt:', prompt)
+
+                    const result = await experimental_generateImage({
+                        model,
+                        prompt,
+                    })
+
+                    console.log('Generated result:', result)
 
                     // If we have images, stream them back as message annotations
                     if (result.images.length > 0) {
-                        // Write a system message with the generated image
-                        const systemMessage = streamText({
-                            model: model,
-                            messages: [{ role: 'system', content: 'Image generated successfully' }]
-                        })
 
-                        // Merge the text stream into our data stream
-                        systemMessage.mergeIntoDataStream(dataStream)
+                        const imageCount = result.images.length
 
-                        // Add the image as a message annotation
                         dataStream.writeMessageAnnotation({
-                            type: 'image-data',
-                            image_data: result.images[0]
+                            type: 'image',
+                            image_data: imageCount,
                         })
 
-                        // If there are warnings, add them to the response
-                        if (result.warnings && result.warnings.length > 0) {
-                            for (const warning of result.warnings) {
-                                dataStream.writeMessageAnnotation({
-                                    type: 'warning',
-                                    warning: warning.message
-                                })
-                            }
-                        }
                     } else {
                         throw new Error('No images were generated')
                     }
@@ -96,16 +74,12 @@ export async function POST(request: Request) {
                     dataStream.writeData({ error: true })
                 }
             },
-            onError: (error) => {
+            onError: (error: unknown) => {
                 console.error('Error in stream:', error)
-                return new Response(JSON.stringify({ error: 'Failed to generate image' }), {
-                    status: 500,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
+                return 'Failed to generate image'
             }
         })
+
     } catch (error) {
         console.error('Error processing request:', error)
         return new Response(JSON.stringify({ error: 'Failed to process request' }), {

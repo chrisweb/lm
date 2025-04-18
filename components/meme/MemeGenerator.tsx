@@ -2,52 +2,52 @@
 
 import { useState, useEffect } from 'react'
 import { useChat } from '@ai-sdk/react'
-import { toast } from '@/components/ui/toaster'
+import { toast } from '@/components/base/toaster'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MemeTopicSelector } from '@/components/meme/MemeTopicSelector'
 import { MemeStyleSelector } from '@/components/meme/MemeStyleSelector'
 import { memeTopics, memeStyles } from '@/lib/meme-data'
 import { useTheme } from 'next-themes'
-import { stat } from 'fs'
 
 interface MemeGeneratorProps {
     onImageGenerated: (image: string) => void
     onLoadingChange: (isLoading: boolean) => void
 }
 
-export function MemeGenerator({ onImageGenerated, onLoadingChange }: MemeGeneratorProps) {
+export function MemeGenerator({ /*onImageGenerated,*/ onLoadingChange }: MemeGeneratorProps) {
     // state for selected options
-    const [topic, setTopic] = useState(memeTopics[0].id)
-    const [style, setStyle] = useState(memeStyles[0].id)
-    const [prompt, setPrompt] = useState('')
+    const [topicState, setTopicState] = useState(memeTopics[0].id)
+    const [styleState, setStyleState] = useState(memeStyles[0].id)
+    const [promptState, setPromptState] = useState('')
     const { theme } = useTheme()
 
-    // get the selected topic and style titles
-    const selectedTopic = memeTopics.find(t => t.id === topic)
-    const selectedStyle = memeStyles.find(s => s.id === style)?.title ?? ''
-
     // use the AI SDK's useChat hook for handling the AI request and streaming response
-    const { /*input, handleInputChange, messages,*/ handleSubmit, status, stop } = useChat({
+    const { input, handleInputChange, messages, handleSubmit, status, stop } = useChat({
         api: '/api/generate-meme',
         onResponse: (response) => {
             // this will be triggered when we get a response from the API
+            console.log(messages)
             console.log('Response received from AI', response)
         },
         onFinish: (message) => {
             // when the message is complete, check for image data
             console.log('Message finished', message)
 
+            // TODO: need to analyze the content of the message and find images
+            // the following AI generated code is commented out until I can verify it works
+            // need to add more reusable types to prevent having error related to properties not existing
+
             // check for image data in message annotations
-            if (message.annotations && message.annotations.length > 0) {
+            /*if (message.annotations && message.annotations.length > 0) {
                 const imageData = message.annotations.find(annotation =>
-                    annotation.type === annotation.
+                    annotation.type === annotation
                 )
 
                 if (imageData?.image_data) {
                     onImageGenerated(imageData.image_data)
                 }
-            }
+            }*/
         },
         onError: (error) => {
             console.error('Error generating meme:', error)
@@ -58,38 +58,47 @@ export function MemeGenerator({ onImageGenerated, onLoadingChange }: MemeGenerat
     // update loading state when isLoading changes
     useEffect(() => {
         onLoadingChange(status === 'streaming')
-    }, [status])
+    }, [status, onLoadingChange])
 
     // handle form submission with custom prompt
     const handleFormSubmit = (e: React.FormEvent) => {
+
         e.preventDefault()
 
-        if (!prompt) {
+        if (!promptState) {
             toast.error('Please enter a prompt for your meme')
             return
         }
 
-        if (!selectedTopic) {
-            toast.error('Please select a meme template')
+        if (!topicState) {
+            toast.error('Please select a meme topic')
             return
         }
 
-        // create the prompt using the template format with letzai_model_name
-        const letzAiPrompt = `${selectedTopic.letzai_model_name} ${prompt}, use the ${selectedStyle} style`
+        if (!styleState) {
+            toast.error('Please select a style')
+            return
+        }
 
-        console.log('Generated prompt:', letzAiPrompt)
-
-        // use the handleSubmit from useChat with our custom prompt
+        // use the handleSubmit from useChat
         handleSubmit(e, {
             body: {
-                prompt: letzAiPrompt,
-                width: 1024,
-                height: 1024,
-                steps: 30,
-                guidanceScale: 7.5
+                topic: topicState,
+                style: styleState,
             }
-
         })
+    }
+
+    const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        setPromptState(value)
+        handleInputChange(e)
+    }
+
+    const handleStop = () => {
+        if (status === 'streaming') {
+            stop()
+        }
     }
 
     // determine button gradient based on theme
@@ -105,30 +114,30 @@ export function MemeGenerator({ onImageGenerated, onLoadingChange }: MemeGenerat
             >
                 <MemeTopicSelector
                     topics={memeTopics}
-                    selectedTopic={topic}
-                    onSelectTopic={setTopic}
+                    selectedTopic={topicState}
+                    onSelectTopic={setTopicState}
                 />
 
                 <MemeStyleSelector
                     styles={memeStyles}
-                    selectedStyle={style}
-                    onSelectStyle={setStyle}
+                    selectedStyle={styleState}
+                    onSelectStyle={setStyleState}
                 />
 
                 <div className="space-y-3">
                     <h3 className="text-lg font-medium">Add Your Text</h3>
                     <Input
                         placeholder="Enter your meme text or idea..."
-                        value={prompt}
-                        onChange={(e) => { setPrompt(e.target.value) }}
+                        value={input}
                         className="h-12"
+                        onChange={handlePromptChange}
                     />
                 </div>
 
                 {(status === 'submitted' || status === 'streaming') && (
                     <div>
                         {status === 'submitted' && <div>🧠</div>}
-                        <button type="button" onClick={() => stop()}>
+                        <button type="button" onClick={handleStop}>
                             Stop
                         </button>
                     </div>
@@ -137,7 +146,7 @@ export function MemeGenerator({ onImageGenerated, onLoadingChange }: MemeGenerat
                 <Button
                     type="submit"
                     className={`w-full text-white font-bold ${buttonClasses}`}
-                    disabled={!prompt || status === 'streaming'}
+                    //disabled={!prompt || status === 'streaming'}
                     size="lg"
                 >
                     Generate Meme 🚀

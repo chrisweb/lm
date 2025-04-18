@@ -18,9 +18,12 @@ export default function Home() {
                 <div className="flex-1 p-6 md:p-8">
                     <div className="mx-auto max-w-3xl space-y-8">
                         <div className="space-y-2 text-center">
-                            <h1 className="text-3xl font-bold sm:text-4xl md:text-5xl">AI Meme Generator</h1>
+                            <h1 className="text-3xl font-bold sm:text-4xl md:text-5xl">Letz meme</h1>
                             <p className="text-lg text-muted-foreground">
-                                Create hilarious memes with AI in seconds! Choose a template, style, and add your text.
+                                AI Meme Generator powered by Letz.ai
+                            </p>
+                            <p className="text-lg text-muted-foreground">
+                                Chose a topic and style, add your prompt, and let the AI generate a meme for you!
                             </p>
                         </div>
                         <div className="flex justify-center">
@@ -42,7 +45,7 @@ export default function Home() {
                                 (
                                     <div className="relative aspect-square w-full max-w-2xl rounded-lg bg-muted flex items-center justify-center">
                                         <p className="px-6 text-center text-lg text-muted-foreground">
-                                            Your generated meme will appear here. Configure your meme in the sidebar and hit generate!
+                                            Your generated meme will appear here.
                                         </p>
                                     </div>
                                 )}
