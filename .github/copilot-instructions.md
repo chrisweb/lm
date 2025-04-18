@@ -32,6 +32,8 @@ Our code is hosted on GitHub
 - Use tailwind css for styling
 - use shadcn UI for styling components
 - Implement responsive and beautiful design pattern, follow best practices in terms of UX for all UI components
+- when adding shadcn ui components to the project always use the command "npx shadcn@latest add COMPONENT_NAME", replace COMPONENT_NAME with the name of the component you want to add
+- never ever put any components into the components/ui folder, that folder is reserved for components that get installed by shadcn
 
 ## caching
 
@@ -53,11 +55,6 @@ Use proper caching strategies using the Next.js 15 dynamicIO experimental featur
 
 - Ensure you follow "Web Content Accessibility Guidelines (WCAG) 2.2" in terms of accessibility for all components
 - Accessibility is not just optional, it is a must have
-
-## 3D guidelines
-
-- Follow React Three Fiber (r3f) patterns and best practices
-- Be mindful of 3D performance, especially with complex geometries
 
 ## backend
 

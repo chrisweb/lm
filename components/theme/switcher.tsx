@@ -1,52 +1,66 @@
 'use client'
 
-import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
+import { Moon, Sun, Laptop } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Monitor } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 export function ThemeSwitcher() {
-    const { theme, setTheme } = useTheme()
+    const { setTheme, theme, resolvedTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
 
-    // prevent hydration mismatch
+    // useEffect only runs on the client, so now we can safely show the UI
     useEffect(() => {
         setMounted(true)
     }, [])
 
     if (!mounted) {
-        return null
+        return (
+            <Button variant="ghost" size="icon" disabled>
+                <Sun className="h-5 w-5" />
+                <span className="sr-only">Toggle theme</span>
+            </Button>
+        )
     }
 
     return (
-        <div className="flex items-center space-x-2">
-            <Select value={theme} onValueChange={setTheme}>
-                <SelectTrigger className="w-[130px]">
-                    <SelectValue placeholder="Theme" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="light">
-                        <span className="flex items-center gap-2">
-                            <Sun className="h-4 w-4" />
-                            Light
-                        </span>
-                    </SelectItem>
-                    <SelectItem value="dark">
-                        <span className="flex items-center gap-2">
-                            <Moon className="h-4 w-4" />
-                            Dark
-                        </span>
-                    </SelectItem>
-                    <SelectItem value="system">
-                        <span className="flex items-center gap-2">
-                            <Monitor className="h-4 w-4" />
-                            System
-                        </span>
-                    </SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    {resolvedTheme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                    <span className="sr-only">Toggle theme</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                    onClick={() => {
+                        setTheme('light')
+                    }}
+                    className={theme === 'light' ? 'bg-accent text-accent-foreground' : ''}
+                >
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Light</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={() => {
+                        setTheme('dark')
+                    }}
+                    className={theme === 'dark' ? 'bg-accent text-accent-foreground' : ''}
+                >
+                    <Moon className="mr-2 h-4 w-4" />
+                    <span>Dark</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={() => {
+                        setTheme('system')
+                    }}
+                    className={theme === 'system' ? 'bg-accent text-accent-foreground' : ''}
+                >
+                    <Laptop className="mr-2 h-4 w-4" />
+                    <span>System</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     )
 }

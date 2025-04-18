@@ -7,7 +7,7 @@ export { toast }
 
 export function Toaster() {
     const { theme } = useTheme()
-    
+
     return (
         <SonnerToaster
             position="top-right"
