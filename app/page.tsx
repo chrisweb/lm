@@ -33,13 +33,15 @@ export default function Home() {
 
             <section id="tools" className="w-full">
                 <div className="container mx-auto px-4">
-                    <h2 className="mb-16 text-center text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">Our AI Tools</h2>
                     <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
                         {/* AI Action Figure Generator */}
                         <Link
                             href="/ai-action-figure-generator"
                             className="group relative flex flex-col items-center overflow-hidden rounded-3xl bg-gradient-to-br from-violet-100 to-violet-200 p-8 transition-all duration-300 hover:shadow-xl dark:from-violet-950 dark:to-violet-900"
                         >
+                            <div className="absolute -right-12 top-8 z-20 rotate-45 bg-red-500 dark:bg-red-600 py-1 px-12 shadow-md">
+                                <span className="text-xs font-bold uppercase tracking-wider text-white">Prototype</span>
+                            </div>
                             <div className="absolute -right-20 -top-20 opacity-10 transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 group-hover:opacity-20">
                                 <Bot className="h-96 w-96 text-violet-700 dark:text-violet-400" />
                             </div>
@@ -57,6 +59,9 @@ export default function Home() {
                             href="/ai-meme-generator"
                             className="group relative flex flex-col items-center overflow-hidden rounded-3xl bg-gradient-to-br from-amber-100 to-amber-200 p-8 transition-all duration-300 hover:shadow-xl dark:from-amber-950 dark:to-amber-900"
                         >
+                            <div className="absolute -right-12 top-8 z-20 rotate-45 bg-red-500 dark:bg-red-600 py-1 px-12 shadow-md">
+                                <span className="text-xs font-bold uppercase tracking-wider text-white">Prototype</span>
+                            </div>
                             <div className="absolute -left-20 -top-20 opacity-10 transition-all duration-500 group-hover:-rotate-12 group-hover:scale-110 group-hover:opacity-20">
                                 <Laugh className="h-96 w-96 text-amber-600 dark:text-amber-400" />
                             </div>

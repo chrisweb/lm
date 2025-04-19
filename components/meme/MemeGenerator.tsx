@@ -149,7 +149,7 @@ export function MemeGenerator({ /*onImageGenerated,*/ onLoadingChange }: MemeGen
                     //disabled={!prompt || status === 'streaming'}
                     size="lg"
                 >
-                    Generate Meme 🚀
+                    Letz Meme
                 </Button>
             </form>
         </div>
