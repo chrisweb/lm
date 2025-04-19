@@ -28,7 +28,9 @@ export default function RootLayout({
                     <div className="flex min-h-screen flex-col">
                         <Header />
                         <div className="flex flex-1 overflow-hidden">
-                            <CollapsibleSidebar />
+                            <aside>
+                                <CollapsibleSidebar />
+                            </aside>
                             <main className="flex-1 overflow-auto w-full">
                                 {children}
                             </main>

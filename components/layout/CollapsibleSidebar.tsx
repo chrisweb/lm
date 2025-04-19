@@ -7,12 +7,12 @@ import { HomeIcon, BotIcon, SmileIcon } from 'lucide-react'
 import {
     Sidebar,
     SidebarContent,
-    SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
-    SidebarTrigger
+    SidebarTrigger,
+    SidebarRail
 } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -32,17 +32,8 @@ export function CollapsibleSidebar() {
                 collapsible="icon"
                 className="border-r border-border"
             >
-                <SidebarHeader className="flex items-center justify-between p-4">
-                    <Link href="/" className="flex items-center gap-2">
-                        <span className="text-xl font-bold hidden md:inline-block">
-                            Letz.AI
-                        </span>
-                    </Link>
-                    <SidebarTrigger />
-                </SidebarHeader>
-
                 <SidebarContent>
-                    <SidebarMenu>
+                    <SidebarMenu className="px-2">
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -84,6 +75,8 @@ export function CollapsibleSidebar() {
                     </SidebarMenu>
                 </SidebarContent>
             </Sidebar>
+            <SidebarTrigger className="fixed top-4 left-[14.5rem] z-40" />
+            <SidebarRail />
         </SidebarProvider>
     )
 }

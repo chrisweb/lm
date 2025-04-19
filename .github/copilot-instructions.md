@@ -28,7 +28,7 @@ Our code is hosted on GitHub
 
 ## UI, themes and design
 
-- The user can chose between dark and light theme, so make sure any design changes work well with both
+- As we have a dark and light theme you need to choose colors for both themes, when adding new ui components, when adding or modifying colors make sure you consider both the dark and light theme
 - Use tailwind css for styling
 - use shadcn UI for styling components
 - Implement responsive and beautiful design pattern, follow best practices in terms of UX for all UI components
