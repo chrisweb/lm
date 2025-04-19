@@ -46,6 +46,7 @@
 /* 80s Miami Light Theme - Pastel colors */
 :root {
   --radius: 0.625rem;
+  --header-height: 4rem; /* 64px - height of the main header */
   --background: oklch(0.98 0.03 80); /* Light pastel blue */
   --foreground: oklch(0.3 0.05 290); /* Dark purple */
   --card: oklch(0.97 0.04 50); /* Light pastel pink */

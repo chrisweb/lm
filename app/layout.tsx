@@ -27,7 +27,7 @@ export default function RootLayout({
                 >
                     <div className="flex min-h-screen flex-col">
                         <Header />
-                        <div className="flex flex-1 overflow-hidden">
+                        <div id="wrapper" className="flex flex-1 overflow-hidden">
                             <aside>
                                 <CollapsibleSidebar />
                             </aside>

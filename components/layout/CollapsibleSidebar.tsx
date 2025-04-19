@@ -30,10 +30,9 @@ export function CollapsibleSidebar() {
                 side="left"
                 variant="sidebar"
                 collapsible="icon"
-                className="border-r border-border"
             >
                 <SidebarContent>
-                    <SidebarMenu className="px-2">
+                    <SidebarMenu className="px-5 pt-5 pb-2">
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -75,7 +74,7 @@ export function CollapsibleSidebar() {
                     </SidebarMenu>
                 </SidebarContent>
             </Sidebar>
-            <SidebarTrigger className="fixed top-4 left-[14.5rem] z-40" />
+            <SidebarTrigger className="fixed top-[var(--header-height)] left-[14.5rem] z-40" />
             <SidebarRail />
         </SidebarProvider>
     )
