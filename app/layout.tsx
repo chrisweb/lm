@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/components/theme/provider'
 import { Toaster } from '@/components/base/toaster'
-import { CollapsibleSidebar } from '@/components/layout/CollapsibleSidebar'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import './globals.css'
@@ -28,9 +27,6 @@ export default function RootLayout({
                     <div className="flex min-h-screen flex-col">
                         <Header />
                         <div id="wrapper" className="flex flex-1 overflow-hidden">
-                            <aside>
-                                <CollapsibleSidebar />
-                            </aside>
                             <main className="flex-1 overflow-auto w-full">
                                 {children}
                             </main>
