@@ -64,8 +64,7 @@ export function ActionFigureGenerator() {
 
         if (event.dataTransfer.files.length > 0) {
             setFileState(event.dataTransfer.files[0])
-            // Process file immediately without trying to trigger form submission
-            processFile(event.dataTransfer.files[0])
+            processFiles(event.dataTransfer.files)
         }
     }
 
@@ -74,13 +73,15 @@ export function ActionFigureGenerator() {
         event.stopPropagation()
         if (event.target.files && event.target.files.length > 0) {
             setFileState(event.target.files[0])
-            // Process file immediately without trying to trigger form submission
-            processFile(event.target.files[0])
+            processFiles(event.target.files)
         }
     }
 
-    // Replace submitForm with processFile to handle file processing directly
-    const processFile = (file: Blob) => {
+    const processFiles = (files: FileList) => {
+
+        // simplified code as we handle only one file
+        const file = files[0]
+
         // check if file is an image
         if (!(/image.*/.exec(file.type))) {
             toast.error('Please upload an image file')
@@ -94,25 +95,11 @@ export function ActionFigureGenerator() {
         }
 
         console.log('🔍 CLIENT: Image set, preparing to send to API', file.type, file.size.toString(), 'bytes')
-
-        const files = {
-            0: file,
-            length: 1,
-            item: (index: number) => index === 0 ? file : null
-        } as unknown as FileList
-
-        console.log('🔍 CLIENT: Created FileList object for API submission')
-        console.log('🔍 CLIENT: Processing submission with image attachment')
+        console.log('CLIENT: Created FileList object for API submission')
+        console.log('CLIENT: Processing submission with image attachment')
 
         // Create a synthetic form event for handleSubmit
-        const syntheticEvent = {
-            preventDefault: () => void 0,
-            stopPropagation: () => void 0,
-            target: {
-                files: files,
-                // Add any other properties you need to simulate the form submission
-            },
-        } as unknown as React.FormEvent<HTMLFormElement>
+        const syntheticEvent = {} as unknown as React.FormEvent<HTMLFormElement>
 
         handleSubmit(syntheticEvent, {
             experimental_attachments: files,
