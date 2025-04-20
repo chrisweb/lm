@@ -85,6 +85,7 @@ Use proper caching strategies using the Next.js 15 dynamicIO experimental featur
 ## editor coding style
 
 - Read the content of the .editorconfig file and make sure you follow the rules listed in that file regarding things like indentation spaces
+- for variable names always use complete words, no abbreviations and no single letters
 
 ## packages
 
