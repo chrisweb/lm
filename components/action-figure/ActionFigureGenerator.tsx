@@ -11,12 +11,12 @@ import { LoadingAnimation } from './LoadingAnimation'
 
 export function ActionFigureGenerator() {
 
-    const [imageDataUrl, setImageDataUrl] = useState<string | null>(null)
-    const [image, setImage] = useState<Blob | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [analysis, setAnalysis] = useState<string | null>(null)
-    const [dragActive, setDragActive] = useState(false)
-    const [mounted, setMounted] = useState(false)
+    const [imageDataUrlState, setImageDataUrlState] = useState<string | null>(null)
+    const [fileState, setFileState] = useState<Blob | null>(null)
+    const [loadingState, setLoadingState] = useState(false)
+    const [analysisState, setAnalysisState] = useState<string | null>(null)
+    const [dragActiveState, setDragActiveState] = useState(false)
+    const [mountedState, setMountedState] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -24,7 +24,7 @@ export function ActionFigureGenerator() {
 
     // useEffect only runs on the client, so we can safely show theme-dependent UI
     useEffect(() => {
-        setMounted(true)
+        setMountedState(true)
     }, [])
 
     // use the AI SDK's useChat hook for handling the AI request and streaming response
@@ -35,13 +35,13 @@ export function ActionFigureGenerator() {
         },
         onFinish: (message) => {
             console.log('message finished', message)
-            setAnalysis(message.content)
-            setLoading(false)
+            setAnalysisState(message.content)
+            setLoadingState(false)
         },
         onError: (error) => {
             console.error('error analyzing image:', error)
             toast.error('Something went wrong while analyzing your image')
-            setLoading(false)
+            setLoadingState(false)
         }
     })
 
@@ -50,30 +50,37 @@ export function ActionFigureGenerator() {
         event.stopPropagation()
 
         if (event.type === 'dragenter' || event.type === 'dragover') {
-            setDragActive(true)
+            setDragActiveState(true)
         } else if (event.type === 'dragleave') {
-            setDragActive(false)
+            setDragActiveState(false)
         }
     }
 
     const handleDrop = (event: React.DragEvent) => {
         event.preventDefault()
         event.stopPropagation()
-        setDragActive(false)
+
+        setDragActiveState(false)
 
         if (event.dataTransfer.files.length > 0) {
-            handleFile(event.dataTransfer.files[0])
+            setFileState(event.dataTransfer.files[0])
+            // Process file immediately without trying to trigger form submission
+            processFile(event.dataTransfer.files[0])
         }
     }
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        event.preventDefault()
+        event.stopPropagation()
         if (event.target.files && event.target.files.length > 0) {
-            handleFile(event.target.files[0])
+            setFileState(event.target.files[0])
+            // Process file immediately without trying to trigger form submission
+            processFile(event.target.files[0])
         }
     }
 
-    const handleFile = (file: File) => {
-
+    // Replace submitForm with processFile to handle file processing directly
+    const processFile = (file: Blob) => {
         // check if file is an image
         if (!(/image.*/.exec(file.type))) {
             toast.error('Please upload an image file')
@@ -86,8 +93,49 @@ export function ActionFigureGenerator() {
             return
         }
 
-        setImage(file)
+        console.log('🔍 CLIENT: Image set, preparing to send to API', file.type, file.size.toString(), 'bytes')
 
+        const files = {
+            0: file,
+            length: 1,
+            item: (index: number) => index === 0 ? file : null
+        } as unknown as FileList
+
+        console.log('🔍 CLIENT: Created FileList object for API submission')
+        console.log('🔍 CLIENT: Processing submission with image attachment')
+
+        // Create a synthetic form event for handleSubmit
+        const syntheticEvent = {
+            preventDefault: () => void 0,
+            stopPropagation: () => void 0,
+            target: {
+                files: files,
+                // Add any other properties you need to simulate the form submission
+            },
+        } as unknown as React.FormEvent<HTMLFormElement>
+
+        handleSubmit(syntheticEvent, {
+            experimental_attachments: files,
+            allowEmptySubmit: true,
+        })
+
+        console.log('🔍 CLIENT: handleSubmit called, checking status:', status)
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
+
+        const reader = new FileReader()
+
+        reader.onload = (event) => {
+            const dataUrl = event.target?.result as string
+            setImageDataUrlState(dataUrl)
+            console.log('🔍 CLIENT: Image converted to data URL for preview')
+        }
+
+        reader.readAsDataURL(file)
+
+        setLoadingState(true)
     }
 
     const handleButtonClick = () => {
@@ -100,53 +148,16 @@ export function ActionFigureGenerator() {
         }
     }
 
-    useEffect(() => {
-
-        if (!image) return
-
-        const files = {
-            0: image,
-            length: 1,
-            item: (index: number) => index === 0 ? image : null
-        } as unknown as FileList
-
-        // fake event for the handleSubmit function
-        const event = new Event('submit', {
-            bubbles: true,
-            cancelable: true,
-        }) as unknown as React.FormEvent<HTMLFormElement>
-
-        handleSubmit(event, {
-            experimental_attachments: files,
-        })
-
-        if (fileInputRef.current) {
-            fileInputRef.current.value = ''
-        }
-
-        const reader = new FileReader()
-
-        reader.onload = (e) => {
-            const dataUrl = e.target?.result as string
-            setImageDataUrl(dataUrl)
-        }
-
-        reader.readAsDataURL(image)
-
-        setLoading(true)
-
-    }, [image, handleSubmit])
-
     // determine button gradient based on theme
-    const buttonClasses = mounted && theme === 'dark' ?
+    const buttonClasses = mountedState && theme === 'dark' ?
         'bg-gradient-to-r from-pink-600 to-violet-500 hover:from-pink-700 hover:to-violet-600 hover:shadow-lg hover:shadow-violet-500/20 transition-all duration-300' :
         'bg-gradient-to-r from-pink-300 to-violet-400 hover:from-pink-400 hover:to-violet-500 hover:shadow-lg hover:shadow-violet-300/30 transition-all duration-300'
 
     return (
         <div className="w-full max-w-2xl mx-auto">
-            {!image ? (
+            {!fileState ? (
                 <Card
-                    className={`border-2 border-dashed p-8 flex flex-col items-center justify-center h-80 ${dragActive ? 'border-primary' : 'border-muted-foreground/20'}`}
+                    className={`border-2 border-dashed p-8 flex flex-col items-center justify-center h-80 ${dragActiveState ? 'border-primary' : 'border-muted-foreground/20'}`}
                     onDragEnter={handleDrag}
                     onDragOver={handleDrag}
                     onDragLeave={handleDrag}
@@ -179,10 +190,10 @@ export function ActionFigureGenerator() {
                 </Card>
             ) : (
                 <div className="space-y-6">
-                    {imageDataUrl && (
+                    {imageDataUrlState && (
                         <div
                             style={{
-                                backgroundImage: `url(${imageDataUrl})`,
+                                backgroundImage: `url(${imageDataUrlState})`,
                                 backgroundSize: 'contain',
                                 backgroundPosition: 'center',
                                 backgroundRepeat: 'no-repeat',
@@ -192,7 +203,7 @@ export function ActionFigureGenerator() {
                             aria-label="Uploaded image"
                         />
                     )}
-                    {loading ? (
+                    {loadingState ? (
                         <div className="mt-8">
                             <LoadingAnimation />
                             {status === 'streaming' && (
@@ -206,11 +217,11 @@ export function ActionFigureGenerator() {
                                 </Button>
                             )}
                         </div>
-                    ) : analysis && (
+                    ) : analysisState && (
                         <Card className="p-6 mt-8">
                             <h3 className="text-xl font-semibold mb-4">Your Action Figure Description</h3>
                             <div className="space-y-2 text-muted-foreground">
-                                {analysis.split('\n').map((paragraph, index) => (
+                                {analysisState.split('\n').map((paragraph, index) => (
                                     <p key={index}>{paragraph}</p>
                                 ))}
                             </div>
