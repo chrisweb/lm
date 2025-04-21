@@ -147,10 +147,12 @@ export function ActionFigureGenerator() {
         }
     }
 
-    // determine button gradient based on theme
-    const buttonClasses = mountedState && theme === 'dark' ?
-        'bg-gradient-to-r from-pink-600 to-violet-500 hover:from-pink-700 hover:to-violet-600 hover:shadow-lg hover:shadow-violet-500/20 transition-all duration-300' :
-        'bg-gradient-to-r from-pink-300 to-violet-400 hover:from-pink-400 hover:to-violet-500 hover:shadow-lg hover:shadow-violet-300/30 transition-all duration-300'
+    // determine button gradient based on theme with improved approach to prevent flickering
+    const buttonClasses = !mountedState 
+        ? 'bg-gradient-to-r from-pink-300 to-violet-400 opacity-0 transition-opacity duration-300' 
+        : theme === 'dark'
+            ? 'bg-gradient-to-r from-pink-600 to-violet-500 hover:from-pink-700 hover:to-violet-600 hover:shadow-lg hover:shadow-violet-500/20 opacity-100 transition-all duration-300' 
+            : 'bg-gradient-to-r from-pink-300 to-violet-400 hover:from-pink-400 hover:to-violet-500 hover:shadow-lg hover:shadow-violet-300/30 opacity-100 transition-all duration-300'
 
     return (
         <div className="w-full max-w-2xl mx-auto">
@@ -203,20 +205,22 @@ export function ActionFigureGenerator() {
                             </div>
                         </Card>
                     )}
-                    <Card className="p-8 mt-8 h-80 overflow-auto border-muted-foreground/40">
+                    <Card className="p-8 mt-8 border-muted-foreground/40">
                         {(status === 'streaming' || status === 'submitted') ? (
                             <div className="mt-8">
                                 <LoadingSkeletons />
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleStop}
-                                    className="mt-4"
-                                    disabled={status !== 'streaming'}
-                                    aria-label="Stop generation"
-                                >
-                                    Stop Generation
-                                </Button>
+                                <div className="flex justify-center mt-4">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleStop}
+                                        className="hover:text-white dark:hover:text-white hover:bg-red-500 dark:hover:bg-red-600 transition-colors"
+                                        disabled={status !== 'streaming'}
+                                        aria-label="Stop generation"
+                                    >
+                                        Stop Generation
+                                    </Button>
+                                </div>
                             </div>
                         ) : analysisState && (
                             <div className="space-y-4">
