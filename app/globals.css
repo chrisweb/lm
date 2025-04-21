@@ -117,3 +117,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+    @keyframes scan {
+      0% {
+        top: 0%;
+      }
+      100% {
+        top: 100%;
+      }
+    }
+  
+    .animate-scan {
+      animation: scan 2s ease-in-out infinite alternate;
+    }
+  
+    .scan-glow {
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8); /* green glow */
+    }
+  }

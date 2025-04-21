@@ -1,132 +1,115 @@
-import { OpenAI } from 'openai'
-import { createDataStreamResponse } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
+import { /*streamObject,*/ streamText, type Message, type CoreUserMessage } from 'ai'
+import { type NextRequest } from 'next/server'
+//import { actionFigureAnalysisSchema } from '@/lib/schema/action-figure'
 
 // initialize the OpenAI client with API key from environment variable
-const openai = new OpenAI({
+const openai = createOpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 })
 
-// define the expected data structure
-interface PromptData {
-    prompt: string
+interface ImageObject {
+    name: string
+    contentType: string
+    url: string
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+
     console.log('🔍 API ROUTE: /api/analyze-image route called')
     console.log('🔍 Request method:', request.method)
-    console.log('🔍 Request headers:', Object.fromEntries(request.headers.entries()))
 
     try {
         // get the FormData from the request
-        const formData = await request.formData()
-        console.log('🔍 FormData received:', Array.from(formData.keys()))
+        const { messages } = await request.json() as { messages: Message[] }
+        console.log('🔍 requestData:', messages)
 
-        // check if there are any attachments (files)
-        const attachments = formData.getAll('attachments') as File[]
-        console.log('🔍 Attachments found:', attachments.length)
-        console.log('🔍 Attachment types:', attachments.map(file => file.type))
+        const lastMessage = messages[messages.length - 1]
 
-        if (attachments.length === 0) {
-            console.log('❌ Error: No image attachments found')
-            return new Response(JSON.stringify({ error: 'Image attachment is required' }), {
+        const { experimental_attachments } = lastMessage
+
+        if (!experimental_attachments || experimental_attachments.length === 0) {
+            console.log('❌ Error: No image attachment found in the request')
+            return new Response(JSON.stringify({ error: 'No image attachment found' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            })
+        }
+
+        if (!experimental_attachments[0].name || !experimental_attachments[0].contentType || !experimental_attachments[0].url) {
+            console.log('❌ Error: Invalid image attachment format')
+            return new Response(JSON.stringify({ error: 'Invalid image attachment format' }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             })
         }
 
         // use the first attachment (image file)
-        const imageFile = attachments[0]
-        console.log('🔍 Processing image file:', imageFile.name, 'Size:', imageFile.size.toString(), 'bytes')
+        const imageFile = experimental_attachments[0] as ImageObject
 
         // ensure it's an image file
-        if (!imageFile.type.startsWith('image/')) {
-            console.log('❌ Error: Attachment is not an image file, type:', imageFile.type)
+        if (!imageFile.contentType.startsWith('image/')) {
+            console.log('❌ Error: Attachment is not an image file, type:', imageFile.contentType)
             return new Response(JSON.stringify({ error: 'Attachment must be an image' }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             })
         }
 
-        // convert the file to a base64 data URL
-        const imageBuffer = await imageFile.arrayBuffer()
-        const base64Image = Buffer.from(imageBuffer).toString('base64')
-        const dataUrl = `data:${imageFile.type};base64,${base64Image}`
-        console.log('🔍 Image converted to base64 data URL successfully')
-
-        // get the prompt from the additional data
-        let promptText = 'Transform this image into an action figure description. Create a detailed description of what this would look like as a toy in blister packaging, including the name, features and accessories.'
-
-        // try to get custom prompt if available
-        const dataField = formData.get('data')
-        if (dataField) {
-            console.log('🔍 Custom data field found in formData')
-            try {
-                const dataJson = JSON.parse(dataField as string) as Partial<PromptData>
-                if (dataJson.prompt) {
-                    promptText = dataJson.prompt
-                    console.log('🔍 Using custom prompt:', promptText)
-                }
-            } catch (e) {
-                console.error('❌ Error parsing data JSON:', e)
-                // use default prompt if parsing fails
+        const customizedMessages: CoreUserMessage[] = [
+            {
+                role: 'user',
+                content: [
+                    {
+                        type: 'text',
+                        text: 'Describe the main person in this image, analyze the following traits: gender, age range (chose between: kid, young adult, middle aged, old), Build , Skin Tone, Hair length, color and haircut style, facial features, facial expression, clothing, posture, has tattoos, has disability, has glasses, has beard, has mustache, has hat, has jewelry, has makeup, has piercings, has scars, has wrinkles, has freckles. Its very important that you return the list of traits as a markdown list and make sure you add no other text to your response.',
+                    },
+                    {
+                        type: 'image',
+                        image: imageFile.url,
+                    },
+                ]
             }
-        } else {
-            console.log('🔍 No custom data field, using default prompt')
-        }
+        ]
 
-        // use createDataStreamResponse to properly handle streaming with annotations
-        console.log('🔍 Creating data stream response...')
-        return createDataStreamResponse({
-            execute: async (dataStream) => {
-                try {
-                    console.log('🔍 Starting OpenAI vision processing...')
-                    console.log('🔍 API Key configured:', openai.apiKey ? 'Yes ✓' : 'No ✗')
+        console.log('🔍 Creating data stream response... lastMessage: ', customizedMessages)
 
-                    // call OpenAI's Chat Completions API with vision capabilities
-                    const response = await openai.chat.completions.create({
-                        model: 'gpt-4-vision-preview',
-                        messages: [
-                            {
-                                role: 'system',
-                                content: 'You are an AI specialized in analyzing images and describing them as if they were action figures in packaging. Be creative and detailed in your analysis. Describe what the action figure would be called, its features, accessories, and the marketing text that would appear on the packaging.'
-                            },
-                            {
-                                role: 'user',
-                                content: [
-                                    { type: 'text', text: promptText },
-                                    { type: 'image_url', image_url: { url: dataUrl } }
-                                ]
-                            }
-                        ],
-                        max_tokens: 1000,
-                        temperature: 0.7,
-                        stream: true,
-                    })
-                    console.log('🔍 OpenAI API called successfully, streaming response...')
-
-                    // process the streaming response
-                    for await (const chunk of response) {
-                        const content = chunk.choices[0]?.delta?.content ?? ''
-
-                        if (content) {
-                            // stream the content to the client
-                            dataStream.writeData({ text: content })
-                        }
-                    }
-                    console.log('✅ OpenAI response streaming completed successfully')
-                } catch (error) {
-                    console.error('❌ Error analyzing image with OpenAI:', error)
-                    dataStream.writeMessageAnnotation({
-                        type: 'error',
-                        error: error instanceof Error ? error.message : 'Unknown error occurred'
-                    })
-                }
-            },
-            onError: (error: unknown) => {
-                console.error('❌ Error in stream:', error)
-                return 'Failed to analyze image'
-            }
+        // problem when decoding the object stream response
+        // TODO: use a schema to get a structured response
+        /*const result = streamObject({
+            model: openai('gpt-4o-mini'),
+            system: 'You are a vision agent that finds the main person in an image and then generates a list of the most significant traits that best describe the person in the image.',
+            messages: customizedMessages,
+            schema: actionFigureAnalysisSchema,
+            temperature: 0.2,
         })
+
+        return result.toTextStreamResponse()*/
+
+        const result = streamText({
+            model: openai('gpt-4o-mini'),
+            system: 'You are a vision agent that finds the main person in an image then describes some of its visual traits.',
+            messages: customizedMessages,
+        })
+
+        return result.toDataStreamResponse({
+            getErrorMessage: (error) => {
+                if (error == null) {
+                    return 'unknown error'
+                }
+
+                if (typeof error === 'string') {
+                    return error
+                }
+
+                if (error instanceof Error) {
+                    return error.message
+                }
+
+                return JSON.stringify(error)
+            },
+        })
+
     } catch (error) {
         console.error('❌ Error processing request:', error)
         return new Response(JSON.stringify({ error: 'Failed to process request' }), {

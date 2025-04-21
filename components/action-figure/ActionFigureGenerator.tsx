@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useTheme } from 'next-themes'
 import { UploadCloud } from 'lucide-react'
-import { LoadingAnimation } from './LoadingAnimation'
+import { LoadingSkeletons } from '@/components/action-figure/LoadingSkeletons'
+import { ScanningAnimation } from '@/components/action-figure/ScanningAnimation'
+import ReactMarkdown from 'react-markdown'
 
 export function ActionFigureGenerator() {
 
     const [imageDataUrlState, setImageDataUrlState] = useState<string | null>(null)
     const [fileState, setFileState] = useState<Blob | null>(null)
-    const [loadingState, setLoadingState] = useState(false)
     const [analysisState, setAnalysisState] = useState<string | null>(null)
     const [dragActiveState, setDragActiveState] = useState(false)
     const [mountedState, setMountedState] = useState(false)
@@ -35,13 +36,18 @@ export function ActionFigureGenerator() {
         },
         onFinish: (message) => {
             console.log('message finished', message)
-            setAnalysisState(message.content)
-            setLoadingState(false)
+            try {
+                console.log('message.content:', message.content)
+                setAnalysisState(message.content)
+                toast.info('Analysis complete!')
+            } catch (error) {
+                console.error('error parsing analysis data:', error)
+                toast.error('Error parsing the analysis data')
+            }
         },
         onError: (error) => {
             console.error('error analyzing image:', error)
             toast.error('Something went wrong while analyzing your image')
-            setLoadingState(false)
         }
     })
 
@@ -121,8 +127,6 @@ export function ActionFigureGenerator() {
         }
 
         reader.readAsDataURL(file)
-
-        setLoadingState(true)
     }
 
     const handleButtonClick = () => {
@@ -132,6 +136,14 @@ export function ActionFigureGenerator() {
     const handleStop = () => {
         if (status === 'streaming') {
             stop()
+            setImageDataUrlState(null)
+            setFileState(null)
+            setAnalysisState(null)
+            setDragActiveState(false)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
+            toast.info('Generation stopped')
         }
     }
 
@@ -144,7 +156,7 @@ export function ActionFigureGenerator() {
         <div className="w-full max-w-2xl mx-auto">
             {!fileState ? (
                 <Card
-                    className={`border-2 border-dashed p-8 flex flex-col items-center justify-center h-80 ${dragActiveState ? 'border-primary' : 'border-muted-foreground/20'}`}
+                    className={`border-2 border-dashed p-8 mt-8 flex flex-col items-center justify-center h-80 ${dragActiveState ? 'border-primary' : 'border-muted-foreground/40'}`}
                     onDragEnter={handleDrag}
                     onDragOver={handleDrag}
                     onDragLeave={handleDrag}
@@ -176,45 +188,43 @@ export function ActionFigureGenerator() {
                     </div>
                 </Card>
             ) : (
-                <div className="space-y-6">
+                <>
                     {imageDataUrlState && (
-                        <div
-                            style={{
-                                backgroundImage: `url(${imageDataUrlState})`,
-                                backgroundSize: 'contain',
-                                backgroundPosition: 'center',
-                                backgroundRepeat: 'no-repeat',
-                                width: '100%',
-                                height: '300px'
-                            }}
-                            aria-label="Uploaded image"
-                        />
+                        <Card className="p-8 mt-8 h-80 border-muted-foreground/40">
+                            <div className="relative h-[300px] w-auto overflow-hidden rounded-xl shadow-lg">
+                                <div
+                                    style={{
+                                        backgroundImage: `url(${imageDataUrlState})`,
+                                    }}
+                                    className="h-full w-full bg-cover bg-center"
+                                    aria-label="Uploaded image"
+                                />
+                                <ScanningAnimation />
+                            </div>
+                        </Card>
                     )}
-                    {loadingState ? (
-                        <div className="mt-8">
-                            <LoadingAnimation />
-                            {status === 'streaming' && (
+                    <Card className="p-8 mt-8 h-80 overflow-auto border-muted-foreground/40">
+                        {(status === 'streaming' || status === 'submitted') ? (
+                            <div className="mt-8">
+                                <LoadingSkeletons />
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleStop}
                                     className="mt-4"
+                                    disabled={status !== 'streaming'}
+                                    aria-label="Stop generation"
                                 >
                                     Stop Generation
                                 </Button>
-                            )}
-                        </div>
-                    ) : analysisState && (
-                        <Card className="p-6 mt-8">
-                            <h3 className="text-xl font-semibold mb-4">Your Action Figure Description</h3>
-                            <div className="space-y-2 text-muted-foreground">
-                                {analysisState.split('\n').map((paragraph, index) => (
-                                    <p key={index}>{paragraph}</p>
-                                ))}
                             </div>
-                        </Card>
-                    )}
-                </div>
+                        ) : analysisState && (
+                            <div className="space-y-4">
+                                <ReactMarkdown>{analysisState}</ReactMarkdown>
+                            </div>
+                        )}
+                    </Card>
+                </>
             )}
         </div>
     )
