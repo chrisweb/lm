@@ -168,7 +168,7 @@ export async function POST(request: Request) {
                         prompt,
                         width: 1024,
                         height: 1024,
-                        quality: 2,
+                        quality: 5,
                         creativity: 2,
                         hasWatermark: true,
                         systemVersion: 3,
