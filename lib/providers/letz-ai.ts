@@ -70,7 +70,7 @@ export class LetzAiImageModel implements ImageModelV1 {
         this.config = config
     }
 
-    private prepareRequest(requestOptions: {
+    private prepareImageRequest(requestOptions: {
         prompt: string
         providerOptions: LetzAiProviderOptions
         baseURL?: string
@@ -136,7 +136,12 @@ export class LetzAiImageModel implements ImageModelV1 {
 
     async doGenerate(providerOptions: Parameters<ImageModelV1['doGenerate']>[0]): Promise<Awaited<ReturnType<ImageModelV1['doGenerate']>>> {
 
-        const { options, config, warnings } = this.prepareRequest(providerOptions)
+        // TODO: I have paused the development of doGenerate as the letzai API
+        // implementation will require several API calls, the initial call to
+        // the API starts the image generation, but after that you need to
+        // poll the API to check if the image is ready, and then get the image
+
+        const { options, config, warnings } = this.prepareImageRequest(providerOptions)
 
         const letzAiErrorDataSchema = z.object({
             error: z.string().optional(),
@@ -148,6 +153,16 @@ export class LetzAiImageModel implements ImageModelV1 {
             errorToMessage: data => data.message ?? 'Unknown error',
         })
 
+        const letzAiSuccessDataSchema = z.object({
+            id: z.string(),
+            imageUrl: z.string().optional(),
+            imagePaths: z.array(z.string()).optional(),
+            imageVersions: z.record(z.string()).optional(),
+            status: z.string()
+        })
+
+        const letzAiSuccessResponseHandler = createJsonResponseHandler(letzAiSuccessDataSchema)  
+
         console.log('Letz.ai API request:', {
             url: `${config.baseURL}/images`,
             headers: config.headers(),
@@ -155,28 +170,32 @@ export class LetzAiImageModel implements ImageModelV1 {
         })
 
         // API call with proper error handling
-        const { responseHeaders, value: response } = await postJsonToApi({
+        const { responseHeaders, value } = await postJsonToApi({
             url: `${config.baseURL}/images`,
             headers: combineHeaders(config.headers(), providerOptions.headers),
             body: options,
             failedResponseHandler: letzAIFailedResponseHandler,
-            successfulResponseHandler: createJsonResponseHandler(
-                z.object({
-                    id: z.string(),
-                    imageUrl: z.string().optional(),
-                    imagePaths: z.array(z.string()).optional(),
-                    imageVersions: z.record(z.string()).optional(),
-                    status: z.string()
-                })
-            ),
+            successfulResponseHandler: letzAiSuccessResponseHandler,
             abortSignal: providerOptions.abortSignal,
             fetch: config.fetch
         })
 
-        console.log('Letz.ai API response:', response)
+        console.log('Letz.ai API response:', responseHeaders, value)
+
+        // TODO: extract the image ID from the response
+
+        let processingDone = false
+
+        while (!processingDone) {
+
+            // TODO: at an interval check if the image is done processing
+            // GET request to /images/:id
+            processingDone = true
+
+        }
 
         // Extract image URLs from response
-        let images: string[] = []
+        /*let images: string[] = []
 
         if (response.imageUrl) {
             images.push(response.imageUrl)
@@ -197,7 +216,10 @@ export class LetzAiImageModel implements ImageModelV1 {
         // If no images were found in the response
         if (images.length === 0) {
             throw new Error('No images were returned from Letz.ai API')
-        }
+        }*/
+
+        // TODO: pseudo code to pass type checking, remove following line when adding the "real" code
+        const images = value.imagePaths ?? []
 
         return {
             images,

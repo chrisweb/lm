@@ -7,15 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useTheme } from 'next-themes'
 import { UploadCloud } from 'lucide-react'
-import { LoadingSkeletons } from '@/components/action-figure/LoadingSkeletons'
 import { ScanningAnimation } from '@/components/action-figure/ScanningAnimation'
-import ReactMarkdown from 'react-markdown'
 
 export function ActionFigureGenerator() {
 
     const [imageDataUrlState, setImageDataUrlState] = useState<string | null>(null)
     const [fileState, setFileState] = useState<Blob | null>(null)
-    const [analysisState, setAnalysisState] = useState<string | null>(null)
+    const [actionFigureState, setActionFigureState] = useState<string | null>(null)
     const [dragActiveState, setDragActiveState] = useState(false)
     const [mountedState, setMountedState] = useState(false)
 
@@ -23,13 +21,11 @@ export function ActionFigureGenerator() {
 
     const { theme } = useTheme()
 
-    // useEffect only runs on the client, so we can safely show theme-dependent UI
     useEffect(() => {
         setMountedState(true)
     }, [])
 
-    // use the AI SDK's useChat hook for handling the AI request and streaming response
-    const { handleSubmit, status, stop } = useChat({
+    const { handleSubmit: handleSubmitImage, status: imageStatus } = useChat({
         api: '/api/analyze-image',
         onResponse: (response) => {
             console.log('response received from ai', response)
@@ -38,8 +34,7 @@ export function ActionFigureGenerator() {
             console.log('message finished', message)
             try {
                 console.log('message.content:', message.content)
-                setAnalysisState(message.content)
-                toast.info('Analysis complete!')
+                designActionFigure(message.content)
             } catch (error) {
                 console.error('error parsing analysis data:', error)
                 toast.error('Error parsing the analysis data')
@@ -48,6 +43,29 @@ export function ActionFigureGenerator() {
         onError: (error) => {
             console.error('error analyzing image:', error)
             toast.error('Something went wrong while analyzing your image')
+        }
+    })
+
+    const { handleSubmit: handleSubmitLetzAi } = useChat({
+        api: '/api/generate-action-figure',
+        onResponse: (response) => {
+            console.log('response received from ai', response)
+        },
+        onFinish: (message) => {
+            console.log('message finished', message)
+            try {
+                console.log('message.content:', message.content)
+                setActionFigureState(message.content)
+                setFileState(null)
+                toast.info('Action figure done!')
+            } catch (error) {
+                console.error('error generating action figure image:', error)
+                toast.error('Error generating action figure image')
+            }
+        },
+        onError: (error) => {
+            console.error('error generating action figure image:', error)
+            toast.error('Something went wrong while generating your action figure image')
         }
     })
 
@@ -107,12 +125,12 @@ export function ActionFigureGenerator() {
         // Create a synthetic form event for handleSubmit
         const syntheticEvent = {} as unknown as React.FormEvent<HTMLFormElement>
 
-        handleSubmit(syntheticEvent, {
+        handleSubmitImage(syntheticEvent, {
             experimental_attachments: files,
             allowEmptySubmit: true,
         })
 
-        console.log('🔍 CLIENT: handleSubmit called, checking status:', status)
+        console.log('🔍 CLIENT: handleSubmit called, checking status:', imageStatus)
 
         if (fileInputRef.current) {
             fileInputRef.current.value = ''
@@ -129,30 +147,29 @@ export function ActionFigureGenerator() {
         reader.readAsDataURL(file)
     }
 
+    const designActionFigure = (analysis: string) => {
+
+        const syntheticEvent = {} as unknown as React.FormEvent<HTMLFormElement>
+
+        handleSubmitLetzAi(syntheticEvent, {
+            body: {
+                traits: analysis
+            },
+            allowEmptySubmit: true,
+        })
+
+    }
+
     const handleButtonClick = () => {
         fileInputRef.current?.click()
     }
 
-    const handleStop = () => {
-        if (status === 'streaming') {
-            stop()
-            setImageDataUrlState(null)
-            setFileState(null)
-            setAnalysisState(null)
-            setDragActiveState(false)
-            if (fileInputRef.current) {
-                fileInputRef.current.value = ''
-            }
-            toast.info('Generation stopped')
-        }
-    }
-
     // determine button gradient based on theme with improved approach to prevent flickering
-    const buttonClasses = !mountedState 
-        ? 'bg-gradient-to-r from-pink-300 to-violet-400 opacity-0 transition-opacity duration-300' 
-        : theme === 'dark'
-            ? 'bg-gradient-to-r from-pink-600 to-violet-500 hover:from-pink-700 hover:to-violet-600 hover:shadow-lg hover:shadow-violet-500/20 opacity-100 transition-all duration-300' 
-            : 'bg-gradient-to-r from-pink-300 to-violet-400 hover:from-pink-400 hover:to-violet-500 hover:shadow-lg hover:shadow-violet-300/30 opacity-100 transition-all duration-300'
+    const buttonClasses = !mountedState ?
+        'bg-gradient-to-r from-pink-300 to-violet-400 opacity-0 transition-opacity duration-300' :
+        theme === 'dark' ?
+            'bg-gradient-to-r from-pink-600 to-violet-500 hover:from-pink-700 hover:to-violet-600 hover:shadow-lg hover:shadow-violet-500/20 opacity-100 transition-all duration-300' :
+            'bg-gradient-to-r from-pink-300 to-violet-400 hover:from-pink-400 hover:to-violet-500 hover:shadow-lg hover:shadow-violet-300/30 opacity-100 transition-all duration-300'
 
     return (
         <div className="w-full max-w-2xl mx-auto">
@@ -205,30 +222,20 @@ export function ActionFigureGenerator() {
                             </div>
                         </Card>
                     )}
-                    <Card className="p-8 mt-8 border-muted-foreground/40">
-                        {(status === 'streaming' || status === 'submitted') ? (
-                            <div className="mt-8">
-                                <LoadingSkeletons />
-                                <div className="flex justify-center mt-4">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleStop}
-                                        className="hover:text-white dark:hover:text-white hover:bg-red-500 dark:hover:bg-red-600 transition-colors"
-                                        disabled={status !== 'streaming'}
-                                        aria-label="Stop generation"
-                                    >
-                                        Stop Generation
-                                    </Button>
-                                </div>
-                            </div>
-                        ) : analysisState && (
-                            <div className="space-y-4">
-                                <ReactMarkdown>{analysisState}</ReactMarkdown>
-                            </div>
-                        )}
-                    </Card>
                 </>
+            )}
+            {actionFigureState && (
+                <Card className="p-8 mt-8 h-80 border-muted-foreground/40">
+                    <div className="relative h-[300px] w-auto overflow-hidden rounded-xl shadow-lg">
+                        <div
+                            style={{
+                                backgroundImage: `url(${actionFigureState})`,
+                            }}
+                            className="h-full w-full bg-cover bg-center"
+                            aria-label="Generated action figure image"
+                        />
+                    </div>
+                </Card>
             )}
         </div>
     )
