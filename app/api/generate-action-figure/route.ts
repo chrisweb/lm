@@ -172,7 +172,7 @@ export async function POST(request: Request) {
                         creativity: 2,
                         hasWatermark: true,
                         systemVersion: 3,
-                        mode: 'default'
+                        mode: 'sigma',
                     }
 
                     if (process.env.NODE_ENV === 'development') {
