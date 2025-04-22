@@ -1,9 +1,23 @@
 //import { letzAi } from '@/lib/providers/letz-ai'
-import { Message/*, experimental_generateImage*/, createDataStreamResponse } from 'ai'
+import { Message, createDataStreamResponse } from 'ai'
+import { ActionFigureGenerationData } from '@/types/action-figure'
 
 // hobby 10s (default) max 60s, pro: 15s (default) max 300s
 // https://vercel.com/docs/functions/configuring-functions/duration#duration-limits
 export const maxDuration = 60
+
+interface LetzAiErrorResponse {
+    message?: string
+    error?: string
+}
+
+interface LetzAiImageResponse {
+    id: string
+    status: string
+    imageUrl?: string
+    imagePaths?: string[]
+    imageVersions?: Record<string, string>
+}
 
 export async function POST(request: Request) {
 
@@ -29,20 +43,66 @@ export async function POST(request: Request) {
 
                     console.log('Generated prompt:', prompt)
 
-                    // TODO: get image form letz-ai using their API endpoints
+                    // Start the image generation process with Letz.ai API
+                    const apiKey = process.env.LETZ_AI_API_KEY
 
-                    dataStream.writeMessageAnnotation({
-                        type: 'progress',
-                        progress: 0,
+                    if (!apiKey) {
+                        throw new Error('Missing LETZ_AI_API_KEY environment variable')
+                    }
+
+                    // Prepare the request options for Letz.ai API
+                    const letzAiRequestOptions = {
+                        prompt,
+                        width: 1024,
+                        height: 1024,
+                        quality: 2,
+                        creativity: 2,
+                        hasWatermark: true,
+                        systemVersion: 3,
+                        mode: 'default'
+                    }
+
+                    console.log('Letz.ai API request options:', letzAiRequestOptions)
+
+                    // Make the initial POST request to start image generation
+                    const response = await fetch('https://api.letz.ai/images', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify(letzAiRequestOptions)
                     })
+
+                    if (!response.ok) {
+                        const errorData = await response.json() as LetzAiErrorResponse
+                        console.error('Letz.ai API error:', errorData)
+                        throw new Error(`Letz.ai API error: ${errorData.message ?? 'Unknown error'}`)
+                    }
+
+                    // Parse the successful response
+                    const imageData = await response.json() as LetzAiImageResponse
+                    console.log('Letz.ai API response:', imageData)
+
+                    const imageAnnotation = {
+                        type: 'generate_image',
+                        imageId: imageData.id,
+                        status: imageData.status,
+                        error: false,
+                    } as ActionFigureGenerationData
+
+                    // Return the image ID to the client for polling
+                    dataStream.writeMessageAnnotation(imageAnnotation)
+
+                    // Send the image ID and initial status to the client
+                    dataStream.writeData({})
 
                 } catch (error) {
                     console.error('Error generating image:', error)
-                    dataStream.writeMessageAnnotation({
-                        type: 'error',
-                        error: error instanceof Error ? error.message : 'Unknown error occurred'
+                    dataStream.writeData({
+                        imageId: '',
+                        status: 'error',
                     })
-                    dataStream.writeData({ error: true })
                 }
             },
             onError: (error: unknown) => {

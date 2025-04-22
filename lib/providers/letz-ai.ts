@@ -161,7 +161,7 @@ export class LetzAiImageModel implements ImageModelV1 {
             status: z.string()
         })
 
-        const letzAiSuccessResponseHandler = createJsonResponseHandler(letzAiSuccessDataSchema)  
+        const letzAiSuccessResponseHandler = createJsonResponseHandler(letzAiSuccessDataSchema)
 
         console.log('Letz.ai API request:', {
             url: `${config.baseURL}/images`,
