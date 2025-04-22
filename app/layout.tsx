@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/components/theme/provider'
 import { Toaster } from '@/components/base/toaster'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Analytics } from '@vercel/analytics/react'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
                         <Footer />
                     </div>
                     <Toaster />
+                    <Analytics />
                 </ThemeProvider>
             </body>
         </html>
