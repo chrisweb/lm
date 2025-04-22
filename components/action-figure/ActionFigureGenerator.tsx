@@ -25,6 +25,7 @@ export function ActionFigureGenerator() {
     const [showGenerateAnotherState, setShowGenerateAnotherState] = useState(false)
     const [originalImageUrlState, setOriginalImageUrlState] = useState<string | null>(null)
     const [showProgressState, setShowProgressState] = useState(true)
+    const [currentAnalysisTextState, setCurrentAnalysisTextState] = useState<string>('')
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -34,6 +35,39 @@ export function ActionFigureGenerator() {
         setMountedState(true)
     }, [])
 
+    // Effect to rotate through analysis texts
+    useEffect(() => {
+        const analysisTexts = [
+            'hmmm what hair color is this?',
+            'hmmm how do you call that haircut again...',
+            'two arms, two legs, I\'m done it\'s a human I guess...',
+            'what color are those eyes?',
+            'is that posture a dance move from Fortnite?...',
+            'analyzing facial features... human confirmed (probably)',
+            'checking for signs of superhero potential...',
+            'measuring shoulder-to-hip ratio for action figure accuracy...',
+            'looking for distinctive characteristics... found some!',
+            'determining optimal action pose for maximum coolness...'
+        ]
+
+        // Set initial random text
+        if (imageDataUrlState && !actionFigureState) {
+            const randomIndex = Math.floor(Math.random() * analysisTexts.length)
+            setCurrentAnalysisTextState(analysisTexts[randomIndex])
+
+            // Set up interval to change text every 6 seconds
+            const textRotationInterval = setInterval(() => {
+                const newRandomIndex = Math.floor(Math.random() * analysisTexts.length)
+                setCurrentAnalysisTextState(analysisTexts[newRandomIndex])
+            }, 6000)
+
+            // Clean up interval on unmount or when conditions change
+            return () => {
+                clearInterval(textRotationInterval)
+            }
+        }
+    }, [imageDataUrlState, actionFigureState])
+
     // Effect to show the "Generate another" button and hide progress after final image is displayed
     useEffect(() => {
         // Check if the action figure is fully generated (100% progress)
@@ -42,11 +76,11 @@ export function ActionFigureGenerator() {
             setShowGenerateAnotherState(false)
             setShowProgressState(true)
 
-            // Set a timeout to show the button and hide progress after 10 seconds
+            // Set a timeout to show the button and hide progress after 5 seconds
             const timeout = setTimeout(() => {
                 setShowGenerateAnotherState(true)
                 setShowProgressState(false)
-            }, 10000)
+            }, 5000)
 
             // Clean up timeout when component unmounts or when states change
             return () => {
@@ -140,17 +174,17 @@ export function ActionFigureGenerator() {
     useEffect(() => {
         if (imageIdState && pollingState) {
 
-            // Start initial polling after 10 seconds
+            // Start initial polling after 5 seconds
             const initialTimeout = setTimeout(() => {
                 checkActionFigureStatus(imageIdState)
 
                 // Then set up regular interval polling
                 const interval = setInterval(() => {
                     checkActionFigureStatus(imageIdState)
-                }, 10000) // Poll every 10 seconds
+                }, 5000) // Poll every 5 seconds
 
                 setPollingIntervalState(interval)
-            }, 10000)
+            }, 5000)
 
             return () => {
                 clearTimeout(initialTimeout)
@@ -399,7 +433,7 @@ export function ActionFigureGenerator() {
                             {(typeof progressState === 'number') && (
                                 <div className="mt-4">
                                     <div className="flex justify-between mb-2">
-                                        <span className="text-sm">Analyzing image...</span>
+                                        <span className="text-sm">{currentAnalysisTextState || 'Analyzing image...'}</span>
                                     </div>
                                 </div>
                             )}
@@ -427,7 +461,7 @@ export function ActionFigureGenerator() {
                                     <Progress value={progressState} className="h-2" />
                                 </div>
                             )}
-                            
+
                             {progressState === 100 && showGenerateAnotherState && (
                                 <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                                     <Button
