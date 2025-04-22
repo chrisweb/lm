@@ -54,15 +54,11 @@ export default function Home() {
                             </div>
                         </Link>
 
-                        {/* AI Meme Generator */}
-                        <Link
-                            href="/ai-meme-generator"
-                            className="group relative flex flex-col items-center overflow-hidden rounded-3xl bg-gradient-to-br from-amber-100 to-amber-200 p-8 transition-all duration-300 hover:shadow-xl dark:from-amber-950 dark:to-amber-900"
+                        {/* AI Meme Generator - Disabled */}
+                        <div
+                            className="group relative flex flex-col items-center overflow-hidden rounded-3xl bg-gradient-to-br from-amber-100 to-amber-200 p-8 dark:from-amber-950 dark:to-amber-900 opacity-70 cursor-not-allowed"
                         >
-                            <div className="absolute -right-12 top-8 z-20 rotate-45 bg-red-500 dark:bg-red-600 py-1 px-12 shadow-md">
-                                <span className="text-xs font-bold uppercase tracking-wider text-white">Prototype</span>
-                            </div>
-                            <div className="absolute -left-20 -top-20 opacity-10 transition-all duration-500 group-hover:-rotate-12 group-hover:scale-110 group-hover:opacity-20">
+                            <div className="absolute -left-20 -top-20 opacity-10">
                                 <Laugh className="h-96 w-96 text-amber-600 dark:text-amber-400" />
                             </div>
                             <div className="relative z-10 flex flex-col items-center text-center">
@@ -72,7 +68,7 @@ export default function Home() {
                                     Create hilarious memes using the power of AI. Just add your text and watch the magic happen!
                                 </p>
                             </div>
-                        </Link>
+                        </div>
                     </div>
                 </div>
             </section>
