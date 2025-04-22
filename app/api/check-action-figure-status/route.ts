@@ -24,8 +24,6 @@ export async function POST(request: Request) {
             imageId: string
         }
 
-        console.log('Checking status for image ID:', imageId)
-
         if (!imageId) {
             throw new Error('Missing imageId in request')
         }
@@ -50,13 +48,14 @@ export async function POST(request: Request) {
 
                     if (!response.ok) {
                         const errorData = await response.json() as LetzAiErrorResponse
-                        console.error('Letz.ai API error:', errorData)
+                        if (process.env.NODE_ENV === 'development') {
+                            console.error('Letz.ai API error:', errorData)
+                        }
                         throw new Error(`Letz.ai API error: ${errorData.message ?? 'Unknown error'}`)
                     }
 
                     // Parse the successful response
                     const statusData = await response.json() as LetzAiStatusResponse
-                    console.log('Letz.ai status response:', statusData)
 
                     // Extract relevant information from the response
                     const {
@@ -84,7 +83,9 @@ export async function POST(request: Request) {
                     dataStream.writeData({})
 
                 } catch (error) {
-                    console.error('Error checking image status:', error)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.error('Error checking image status:', error)
+                    }
                     dataStream.writeMessageAnnotation({
                         type: 'error',
                         error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -101,13 +102,17 @@ export async function POST(request: Request) {
                 }
             },
             onError: (error: unknown) => {
-                console.error('Error in stream:', error)
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('Error in stream:', error)
+                }
                 return 'Failed to check image status'
             }
         })
 
     } catch (error) {
-        console.error('Error processing request:', error)
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Error processing request:', error)
+        }
         return new Response(JSON.stringify({ error: 'Failed to process request' }), {
             status: 500,
             headers: {

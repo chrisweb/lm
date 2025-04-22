@@ -16,20 +16,22 @@ interface ImageObject {
 
 export async function POST(request: NextRequest) {
 
-    console.log('🔍 API ROUTE: /api/analyze-image route called')
-    console.log('🔍 Request method:', request.method)
+    if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 API ROUTE: /api/analyze-image route called')
+    }
 
     try {
         // get the FormData from the request
         const { messages } = await request.json() as { messages: Message[] }
-        console.log('🔍 requestData:', messages)
 
         const lastMessage = messages[messages.length - 1]
 
         const { experimental_attachments } = lastMessage
 
         if (!experimental_attachments || experimental_attachments.length === 0) {
-            console.log('❌ Error: No image attachment found in the request')
+            if (process.env.NODE_ENV === 'development') {
+                console.log('❌ Error: No image attachment found in the request')
+            }
             return new Response(JSON.stringify({ error: 'No image attachment found' }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
@@ -37,7 +39,9 @@ export async function POST(request: NextRequest) {
         }
 
         if (!experimental_attachments[0].name || !experimental_attachments[0].contentType || !experimental_attachments[0].url) {
-            console.log('❌ Error: Invalid image attachment format')
+            if (process.env.NODE_ENV === 'development') {
+                console.log('❌ Error: Invalid image attachment format')
+            }
             return new Response(JSON.stringify({ error: 'Invalid image attachment format' }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
@@ -49,7 +53,9 @@ export async function POST(request: NextRequest) {
 
         // ensure it's an image file
         if (!imageFile.contentType.startsWith('image/')) {
-            console.log('❌ Error: Attachment is not an image file, type:', imageFile.contentType)
+            if (process.env.NODE_ENV === 'development') {
+                console.log('❌ Error: Attachment is not an image file, type:', imageFile.contentType)
+            }
             return new Response(JSON.stringify({ error: 'Attachment must be an image' }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
@@ -62,7 +68,7 @@ export async function POST(request: NextRequest) {
                 content: [
                     {
                         type: 'text',
-                        text: 'Describe the main person in this image, analyze the following traits: gender, age range (chose between: kid, young adult, middle aged, old), Build , Skin Tone, Hair length, color and haircut style, facial features, facial expression, clothing, posture, has tattoos, has disability, has glasses, has beard, has mustache, has hat, has jewelry, has makeup, has piercings, has scars, has wrinkles, has freckles. Its very important that you return the list of traits as a markdown list and make sure you add no other text to your response.',
+                        text: 'Describe the main person in this image, analyze the following traits: gender, age range (chose between: kid, young adult, middle aged, old), Build , Skin Tone, Hair length, color and haircut style, facial features, facial expression, clothing, posture, has tattoos, has glasses, has beard, has mustache, has hat, has jewelry, has makeup, has piercings, has scars, has wrinkles, has freckles. Its very important that you return the list of traits as a markdown list and make sure you add no other text to your response.',
                     },
                     {
                         type: 'image',
@@ -72,7 +78,9 @@ export async function POST(request: NextRequest) {
             }
         ]
 
-        console.log('🔍 Creating data stream response... lastMessage: ', customizedMessages)
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 Creating data stream response... lastMessage: ', customizedMessages)
+        }
 
         // problem when decoding the object stream response
         // TODO: use a schema to get a structured response
@@ -111,7 +119,9 @@ export async function POST(request: NextRequest) {
         })
 
     } catch (error) {
-        console.error('❌ Error processing request:', error)
+        if (process.env.NODE_ENV === 'development') {
+            console.error('❌ Error processing request:', error)
+        }
         return new Response(JSON.stringify({ error: 'Failed to process request' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }

@@ -12,7 +12,9 @@ export async function POST(request: Request) {
             style?: string
         }
 
-        console.log('Received request:', { messages, topic, style })
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Received request:', { messages, topic, style })
+        }
 
         // Use createDataStreamResponse to properly handle streaming with annotations
         return createDataStreamResponse({
@@ -26,7 +28,9 @@ export async function POST(request: Request) {
                         }
                     )
 
-                    console.log('Model initialized:', model)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('Model initialized:', model)
+                    }
 
                     if (!messages || messages.length === 0) {
                         throw new Error('No messages provided')
@@ -43,14 +47,18 @@ export async function POST(request: Request) {
 
                     const prompt = `You are a skilled content creator that loves generating memes. The topic for this meme is "${memeTopic}". The style you should use is "${memeStyle}". Follow the instructions: "${lastMessageOnly}". `
 
-                    console.log('Generated prompt:', prompt)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('Generated prompt:', prompt)
+                    }
 
                     const result = await experimental_generateImage({
                         model,
                         prompt,
                     })
 
-                    console.log('Generated result:', result)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('Generated result:', result)
+                    }
 
                     // If we have images, stream them back as message annotations
                     if (result.images.length > 0) {
@@ -66,7 +74,9 @@ export async function POST(request: Request) {
                         throw new Error('No images were generated')
                     }
                 } catch (error) {
-                    console.error('Error generating image:', error)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.error('Error generating image:', error)
+                    }
                     dataStream.writeMessageAnnotation({
                         type: 'error',
                         error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -75,13 +85,17 @@ export async function POST(request: Request) {
                 }
             },
             onError: (error: unknown) => {
-                console.error('Error in stream:', error)
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('Error in stream:', error)
+                }
                 return 'Failed to generate image'
             }
         })
 
     } catch (error) {
-        console.error('Error processing request:', error)
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Error processing request:', error)
+        }
         return new Response(JSON.stringify({ error: 'Failed to process request' }), {
             status: 500,
             headers: {

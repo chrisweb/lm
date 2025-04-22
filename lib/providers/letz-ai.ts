@@ -163,12 +163,6 @@ export class LetzAiImageModel implements ImageModelV1 {
 
         const letzAiSuccessResponseHandler = createJsonResponseHandler(letzAiSuccessDataSchema)
 
-        console.log('Letz.ai API request:', {
-            url: `${config.baseURL}/images`,
-            headers: config.headers(),
-            body: options,
-        })
-
         // API call with proper error handling
         const { responseHeaders, value } = await postJsonToApi({
             url: `${config.baseURL}/images`,
@@ -179,8 +173,6 @@ export class LetzAiImageModel implements ImageModelV1 {
             abortSignal: providerOptions.abortSignal,
             fetch: config.fetch
         })
-
-        console.log('Letz.ai API response:', responseHeaders, value)
 
         // TODO: extract the image ID from the response
 

@@ -34,49 +34,7 @@ export function ActionFigureGenerator() {
     const { handleSubmit: handleSubmitStatusCheck } = useChat({
         api: '/api/check-action-figure-status',
         onResponse: (response) => {
-            console.log('status check response received', response)
-
-            /*if (response.data) {
-                const {
-                    progress,
-                    previewImage,
-                    imageVersions,
-                    complete
-                } = response.data as ActionFigureStatusData
-
-                // Update progress
-                if (typeof progress === 'number') {
-                    setProgressState(progress)
-                }
-
-                // Show preview image if available
-                if (previewImage) {
-                    setActionFigureState(previewImage)
-                }
-
-                // If generation is complete, set the final image and stop polling
-                if (complete && imageVersions) {
-                    console.log('Image generation complete!', imageVersions)
-
-                    // Use the highest quality version available, or the first one if no specific versions
-                    const imageVersionsTyped = imageVersions as ActionFigureImageVersions
-                    const finalImage = imageVersionsTyped.lg ?? imageVersionsTyped.md ?? imageVersionsTyped.sm ??
-                        Object.values(imageVersions)[0]
-
-                    if (finalImage) {
-                        setActionFigureState(finalImage)
-                        setProgressState(100)
-                        setPollingState(false)
-
-                        if (pollingIntervalState) {
-                            clearInterval(pollingIntervalState)
-                            setPollingIntervalState(null)
-                        }
-
-                        toast.success('Action figure generated successfully!')
-                    }
-                }
-            }*/
+            console.log('🔍 check-action-figure-status: response received from letz.ai', response)
         },
         onFinish: (message) => {
 
@@ -89,8 +47,6 @@ export function ActionFigureGenerator() {
                 const annotationData = annotations.find((annotation) => {
                     return annotation.type === 'action_figure_status'
                 })
-
-                console.log('check-action-figure-status:', annotationData)
 
                 if (!annotationData) {
                     console.error('check-action-figure-status: no image data found in annotations')
@@ -107,7 +63,6 @@ export function ActionFigureGenerator() {
                 }
 
                 if (annotationData.status.progress === 100 && annotationData.status.imageVersions) {
-                    console.log('Image generation complete!', annotationData.status.imageVersions)
 
                     if (pollingIntervalState) {
                         clearInterval(pollingIntervalState)
@@ -151,7 +106,6 @@ export function ActionFigureGenerator() {
     // Set up status polling effect
     useEffect(() => {
         if (imageIdState && pollingState) {
-            console.log('Starting polling for image status with ID:', imageIdState)
 
             // Start initial polling after 10 seconds
             const initialTimeout = setTimeout(() => {
@@ -183,12 +137,10 @@ export function ActionFigureGenerator() {
     const { handleSubmit: handleSubmitImage, status: imageStatus } = useChat({
         api: '/api/analyze-image',
         onResponse: (response) => {
-            console.log('chatgpt response received', response)
+            console.log('chatgpt response received', response, imageStatus)
         },
         onFinish: (message) => {
-            console.log('chatgpt message finished', message)
             try {
-                console.log('chatgpt message.content:', message.content)
                 designActionFigure(message.content)
             } catch (error: unknown) {
                 console.error('error parsing analysis data:', error)
@@ -207,7 +159,6 @@ export function ActionFigureGenerator() {
             console.log('generate-action-figure: response received from letz.ai', response)
         },
         onFinish: (message) => {
-            console.log('generate-action-figure: message finished', message)
 
             const annotations = message.annotations as ActionFigureGenerationData[]
 
@@ -222,11 +173,10 @@ export function ActionFigureGenerator() {
                 }
                 setImageIdState(annotationData.imageId)
                 setPollingState(true)
-                console.log('generate-action-figure, letz.ai image id:', annotationData.imageId)
             }
         },
         onError: (error) => {
-            console.error('error starting action figure generation:', error)
+            console.error('error generating action figure:', error)
             toast.error('Something went wrong while starting your action figure generation')
         }
     })
@@ -291,10 +241,6 @@ export function ActionFigureGenerator() {
             return
         }
 
-        console.log('🔍 CLIENT: Image set, preparing to send to API', file.type, file.size.toString(), 'bytes')
-        console.log('CLIENT: Created FileList object for API submission')
-        console.log('CLIENT: Processing submission with image attachment')
-
         // Create a synthetic form event for handleSubmit
         const syntheticEvent = {} as unknown as React.FormEvent<HTMLFormElement>
 
@@ -302,8 +248,6 @@ export function ActionFigureGenerator() {
             experimental_attachments: files,
             allowEmptySubmit: true,
         })
-
-        console.log('🔍 CLIENT: handleSubmit called, checking status:', imageStatus)
 
         if (fileInputRef.current) {
             fileInputRef.current.value = ''
@@ -314,7 +258,6 @@ export function ActionFigureGenerator() {
         reader.onload = (event) => {
             const dataUrl = event.target?.result as string
             setImageDataUrlState(dataUrl)
-            console.log('🔍 CLIENT: Image converted to data URL for preview')
         }
 
         reader.readAsDataURL(file)
@@ -322,8 +265,6 @@ export function ActionFigureGenerator() {
 
     const designActionFigure = (analysis: string) => {
         const syntheticEvent = {} as unknown as React.FormEvent<HTMLFormElement>
-
-        console.log('design action figure:', analysis)
 
         handleLetzAiGenerate(syntheticEvent, {
             body: {
