@@ -22,6 +22,9 @@ export function ActionFigureGenerator() {
     const [progressState, setProgressState] = useState(0)
     const [pollingState, setPollingState] = useState(false)
     const [pollingIntervalState, setPollingIntervalState] = useState<NodeJS.Timeout | null>(null)
+    const [showGenerateAnotherState, setShowGenerateAnotherState] = useState(false)
+    const [originalImageUrlState, setOriginalImageUrlState] = useState<string | null>(null)
+    const [showProgressState, setShowProgressState] = useState(true)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -30,6 +33,31 @@ export function ActionFigureGenerator() {
     useEffect(() => {
         setMountedState(true)
     }, [])
+
+    // Effect to show the "Generate another" button and hide progress after final image is displayed
+    useEffect(() => {
+        // Check if the action figure is fully generated (100% progress)
+        if (actionFigureState && progressState === 100) {
+            // Hide the button and progress initially
+            setShowGenerateAnotherState(false)
+            setShowProgressState(true)
+
+            // Set a timeout to show the button and hide progress after 10 seconds
+            const timeout = setTimeout(() => {
+                setShowGenerateAnotherState(true)
+                setShowProgressState(false)
+            }, 10000)
+
+            // Clean up timeout when component unmounts or when states change
+            return () => {
+                clearTimeout(timeout)
+            }
+        } else {
+            // Reset states when we don't have a complete action figure
+            setShowGenerateAnotherState(false)
+            setShowProgressState(true)
+        }
+    }, [actionFigureState, progressState])
 
     const { handleSubmit: handleSubmitStatusCheck } = useChat({
         api: '/api/check-action-figure-status',
@@ -75,6 +103,11 @@ export function ActionFigureGenerator() {
                         setActionFigureState(finalImage)
                         setProgressState(100)
                         setPollingState(false)
+
+                        // Store the original image URL for download
+                        if (annotationData.status.imageVersions.original) {
+                            setOriginalImageUrlState(annotationData.status.imageVersions.original)
+                        }
 
                         if (pollingIntervalState) {
                             clearInterval(pollingIntervalState)
@@ -278,6 +311,34 @@ export function ActionFigureGenerator() {
         fileInputRef.current?.click()
     }
 
+    const handleGenerateAnother = () => {
+        // Reset all states to allow for a new image upload
+        setImageDataUrlState(null)
+        setFileState(null)
+        setActionFigureState(null)
+        setDragActiveState(false)
+        setImageIdState(null)
+        setProgressState(0)
+        setPollingState(false)
+        setShowGenerateAnotherState(false)
+        setOriginalImageUrlState(null)
+
+        // Clear any active polling intervals
+        if (pollingIntervalState) {
+            clearInterval(pollingIntervalState)
+            setPollingIntervalState(null)
+        }
+    }
+
+    const handleDownloadImage = () => {
+        if (originalImageUrlState) {
+            // Open the image in a new browser tab
+            window.open(originalImageUrlState, '_blank')
+        } else {
+            toast.error('Image URL not available')
+        }
+    }
+
     // determine button gradient based on theme with improved approach to prevent flickering
     const buttonClasses = !mountedState ?
         'bg-gradient-to-r from-pink-300 to-violet-400 opacity-0 transition-opacity duration-300' :
@@ -286,11 +347,10 @@ export function ActionFigureGenerator() {
             'bg-gradient-to-r from-pink-300 to-violet-400 hover:from-pink-400 hover:to-violet-500 hover:shadow-lg hover:shadow-violet-300/30 opacity-100 transition-all duration-300'
 
     return (
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="w-full max-w-2xl mx-auto px-4">
             {!fileState ? (
                 <Card
-                    // width = 640px + 2 * 32px (padding) + 2 * 1px (border)
-                    className={`border-dashed p-8 mt-8 flex flex-col items-center justify-center w-[706px] h-auto ${dragActiveState ? 'border-primary' : 'border-muted-foreground/40'}`}
+                    className={`border-dashed p-4 sm:p-6 md:p-8 mt-4 sm:mt-8 flex flex-col items-center justify-center w-full max-w-full aspect-square sm:aspect-auto ${dragActiveState ? 'border-primary' : 'border-muted-foreground/40'}`}
                     onDragEnter={handleDrag}
                     onDragOver={handleDrag}
                     onDragLeave={handleDrag}
@@ -305,11 +365,11 @@ export function ActionFigureGenerator() {
                     />
                     <div className="flex flex-col items-center text-center space-y-4">
                         <UploadCloud
-                            className="h-12 w-12 text-muted-foreground"
+                            className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground"
                         />
                         <div className="space-y-2">
-                            <p className="text-lg font-medium">Drag and drop an image or click to upload</p>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-base sm:text-lg font-medium">Drag and drop an image or click to upload</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                                 Upload a photo to transform into an action figure (max 10MB)
                             </p>
                         </div>
@@ -324,13 +384,13 @@ export function ActionFigureGenerator() {
             ) : (
                 <>
                     {imageDataUrlState && !actionFigureState && (
-                        <Card className="p-8 mt-8 border-muted-foreground/40 w-[706px]">
+                        <Card className="p-4 sm:p-6 md:p-8 mt-4 sm:mt-8 border-muted-foreground/40 w-full max-w-full">
                             <div className="relative overflow-hidden shadow-lg">
                                 <div
                                     style={{
                                         backgroundImage: `url(${imageDataUrlState})`,
                                     }}
-                                    className="h-[640px] w-auto bg-cover bg-center"
+                                    className="w-full aspect-square md:max-h-[640px] bg-cover bg-center"
                                     aria-label="Uploaded image"
                                 />
                                 <ScanningAnimation />
@@ -347,24 +407,43 @@ export function ActionFigureGenerator() {
                     )}
 
                     {actionFigureState && (
-                        <Card className="p-8 mt-8 border-muted-foreground/40 w-[706px]">
+                        <Card className="p-4 sm:p-6 md:p-8 mt-4 sm:mt-8 border-muted-foreground/40 w-full max-w-full">
                             <div className="relative overflow-hidden shadow-lg">
                                 <div
                                     style={{
                                         backgroundImage: `url(${actionFigureState})`,
                                     }}
-                                    className="h-[640px] w-auto bg-auto"
+                                    className="w-full aspect-square md:max-h-[640px] bg-contain bg-center bg-no-repeat"
                                     aria-label="Generated action figure image"
                                 />
                             </div>
 
-                            {(typeof progressState === 'number') && (
+                            {(typeof progressState === 'number') && showProgressState && (
                                 <div className="mt-4">
                                     <div className="flex justify-between mb-2">
                                         <span className="text-sm">Generating action figure...</span>
                                         <span className="text-sm font-medium">{progressState}%</span>
                                     </div>
                                     <Progress value={progressState} className="h-2" />
+                                </div>
+                            )}
+                            
+                            {progressState === 100 && showGenerateAnotherState && (
+                                <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                                    <Button
+                                        onClick={handleGenerateAnother}
+                                        className={`text-white font-medium ${buttonClasses}`}
+                                        aria-label="Generate another action figure"
+                                    >
+                                        Letz generate another
+                                    </Button>
+                                    <Button
+                                        onClick={handleDownloadImage}
+                                        className={`text-white font-medium ${buttonClasses}`}
+                                        aria-label="Download action figure image"
+                                    >
+                                        Download Image
+                                    </Button>
                                 </div>
                             )}
                         </Card>
