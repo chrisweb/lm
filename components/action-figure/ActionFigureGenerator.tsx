@@ -348,7 +348,8 @@ export function ActionFigureGenerator() {
         <div className="w-full max-w-2xl mx-auto">
             {!fileState ? (
                 <Card
-                    className={`border-2 border-dashed p-8 mt-8 flex flex-col items-center justify-center w-[656px] h-auto ${dragActiveState ? 'border-primary' : 'border-muted-foreground/40'}`}
+                    // width = 640px + 2 * 32px (padding) + 2 * 1px (border)
+                    className={`border-dashed p-8 mt-8 flex flex-col items-center justify-center w-[706px] h-auto ${dragActiveState ? 'border-primary' : 'border-muted-foreground/40'}`}
                     onDragEnter={handleDrag}
                     onDragOver={handleDrag}
                     onDragLeave={handleDrag}
@@ -382,7 +383,7 @@ export function ActionFigureGenerator() {
             ) : (
                 <>
                     {imageDataUrlState && !actionFigureState && (
-                        <Card className="p-8 mt-8 border-muted-foreground/40">
+                        <Card className="p-8 mt-8 border-muted-foreground/40 w-[706px]">
                             <div className="relative overflow-hidden shadow-lg">
                                 <div
                                     style={{
@@ -405,7 +406,7 @@ export function ActionFigureGenerator() {
                     )}
 
                     {actionFigureState && (
-                        <Card className="p-8 mt-8 border-muted-foreground/40">
+                        <Card className="p-8 mt-8 border-muted-foreground/40 w-[706px]">
                             <div className="relative overflow-hidden shadow-lg">
                                 <div
                                     style={{
