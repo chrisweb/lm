@@ -155,7 +155,7 @@ const stylisticConfig = [
             // https://github.com/typescript-eslint/typescript-eslint/issues/1824
             '@stylistic/indent': ['warn', 4],
             '@stylistic/indent-binary-ops': ['warn', 4],
-            '@stylistic/quotes': ['warn', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+            '@stylistic/quotes': ['warn', 'single', { avoidEscape: true, allowTemplateLiterals: 'always' }],
             '@stylistic/jsx-quotes': ['warn', 'prefer-double'],
             '@stylistic/semi': ['warn', 'never'],
             '@stylistic/eol-last': 'off',

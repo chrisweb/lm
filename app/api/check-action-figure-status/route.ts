@@ -47,11 +47,16 @@ export async function POST(request: Request) {
                     })
 
                     if (!response.ok) {
-                        const errorData = await response.json() as LetzAiErrorResponse
                         if (process.env.NODE_ENV === 'development') {
-                            console.error('Letz.ai API error:', errorData)
+                            console.error('Letz.ai API error:', response)
                         }
-                        throw new Error(`Letz.ai API error: ${errorData.message ?? 'Unknown error'}`)
+                        const contentType = response.headers.get('content-type')
+                        if (contentType?.includes('application/json')) {
+                            const errorData = await response.json() as LetzAiErrorResponse
+                            throw new Error(`Letz.ai API error: ${errorData.message ?? 'Unknown error'}`)
+                        } else {
+                            throw new Error('Letz.ai API error: Unknown error')
+                        }
                     }
 
                     // Parse the successful response
